@@ -40,18 +40,17 @@ async fn main() -> anyhow::Result<()> {
                 if let Some(extension) = entry.path().extension() {
                     let ext_str = extension.to_str().unwrap_or("").to_lowercase();
                     if let Some(blacklist) = &args.blacklist_extensions
-                        && blacklist
-                            .iter()
-                            .any(|e| regex::Regex::new(&format!("{}$", e.trim_start_matches('.'))).map_or(false, |r| r.is_match(&ext_str)))
+                        && blacklist.iter().any(|e| regex::Regex::new(&format!("{}$", e.trim_start_matches('.'))).is_ok_and(|r| r.is_match(&ext_str)))
                     {
                         debug!("Ignoring file {:?} due to blacklist", entry.path());
                         return None;
                     }
 
                     if let Some(whitelist) = &args.whitelist_extensions
-                        && whitelist
-                            .iter()
-                            .any(|e| regex::Regex::new(&format!("{}$", e.trim_start_matches('.'))).map_or(false, |r| !r.is_match(&ext_str)))
+                        && (ext_str.is_empty()
+                            || whitelist
+                                .iter()
+                                .any(|e| regex::Regex::new(&format!("{}$", e.trim_start_matches('.'))).is_ok_and(|r| !r.is_match(&ext_str))))
                     {
                         debug!("Ignoring file {:?} due to whitelist", entry.path());
                         return None;
